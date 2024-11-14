@@ -8,6 +8,7 @@ import { Box, Flex, Input, Stack, Textarea } from "@chakra-ui/react";
 import { Field } from "./components/ui/field.jsx";
 import { Button } from "./components/ui/button.jsx";
 import { useState } from "react";
+import axios from "axios";
 
 function Navbar() {
   const nav = useNavigate();
@@ -70,13 +71,7 @@ function BoardAdd() {
           <Input value={writer} onChange={(e) => setWriter(e.target.value)} />
         </Field>
         <Box>
-          <Button
-            onClick={() => {
-              handleSaveClick;
-            }}
-          >
-            저장
-          </Button>
+          <Button onClick={handleSaveClick}>저장</Button>
         </Box>
       </Stack>
     </Box>
