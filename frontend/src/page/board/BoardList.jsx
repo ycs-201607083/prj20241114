@@ -49,6 +49,23 @@ export function BoardList() {
     navigate(`/view/${id}`);
   }
 
+  function handleSearchClick() {
+    if (search.keyword.trim().length > 0) {
+      //검색
+      const nextSearchParam = new URLSearchParams(searchParams);
+      nextSearchParam.set("st", search.type);
+      nextSearchParam.set("sk", search.keyword);
+
+      setSearchParams(nextSearchParam);
+    } else {
+      const nextSearchParam = new URLSearchParams(searchParams);
+      nextSearchParam.delete("st");
+      nextSearchParam.delete("sk");
+
+      setSearchParams(nextSearchParam);
+    }
+  }
+
   function handlePageChange(e) {
     console.log(e.page);
     const nextSearchParams = new URLSearchParams(searchParams);
@@ -94,11 +111,12 @@ export function BoardList() {
         </NativeSelectRoot>
 
         <Input
+          value={search.keyword}
           onChange={(e) => {
-            setSearch({ ...search, keyword: e.target.value });
+            setSearch({ ...search, keyword: e.target.value.trim() });
           }}
         />
-        <Button>검색</Button>
+        <Button onClick={handleSearchClick}>검색</Button>
       </HStack>
       <PaginationRoot
         onPageChange={handlePageChange}
