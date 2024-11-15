@@ -9,18 +9,22 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
+@RequiredArgsConstructor
 public class BoardService {
-    private final BoardMapper mapper;
+
+    final BoardMapper mapper;
 
     public boolean add(Board board) {
         int cnt = mapper.insert(board);
+
         return cnt == 1;
+
     }
 
-    public List<Board> list() {
-        return mapper.selectAll();
+    public List<Board> list(Integer page) {
+
+        return mapper.selectPage((page - 1) * 10);
     }
 
     public Board get(int id) {
@@ -38,7 +42,6 @@ public class BoardService {
         int cnt = mapper.deleteById(id);
         return cnt == 1;
     }
-
 
     public boolean update(Board board) {
         int cnt = mapper.update(board);

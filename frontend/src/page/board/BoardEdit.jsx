@@ -1,94 +1,81 @@
-import { useNavigate, useParams } from "react-router-dom";
-import { Box, Input, Spinner, Stack, Textarea } from "@chakra-ui/react";
-import React, { useEffect, useState } from "react";
+import { Box, HStack, Table } from "@chakra-ui/react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import { Field } from "../../components/ui/field.jsx";
-import { Button } from "../../components/ui/button.jsx";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  DialogActionTrigger,
-  DialogBody,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogRoot,
-  DialogTitle,
-  DialogTrigger,
-} from "../../components/ui/dialog.jsx";
-import { toaster } from "../../components/ui/toaster.jsx";
+  PaginationItems,
+  PaginationNextTrigger,
+  PaginationPrevTrigger,
+  PaginationRoot,
+} from "../../components/ui/pagination.jsx";
 
-export function BoardEdit() {
-  const { id } = useParams();
-  const [board, setBoard] = useState(null);
-  const [progress, setProgress] = useState(false);
+export function BoardList() {
+  const [boardList, setBoardList] = useState([]);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
-    axios.get(`/api/board/view/${id}`).then((res) => setBoard(res.data));
-  }, []);
+    axios
+      .get("/api/board/list", {
+        params: searchParams,
+      })
+      .then((res) => res.data)
+      .then((data) => setBoardList(data));
+  }, [searchParams]);
 
-  if (board === null) {
-    return <Spinner />;
+  // searchParams
+  console.log(searchParams.toString());
+
+  // page 번호
+  const pageParam = searchParams.get("page") ? searchParams.get("page") : "1";
+  const page = Number(pageParam);
+
+  function handleRowClick(id) {
+    navigate(`/view/${id}`);
   }
 
-  const handleSaveClick = () => {
-    setProgress(true);
+  function handlePageChange(e) {
+    console.log(e.page);
+    const nextSearchParams = new URLSearchParams(searchParams);
+    nextSearchParams.set("page", e.page);
+    setSearchParams(nextSearchParams);
+  }
 
-    axios
-      .put("/api/board/update", board)
-      .then((res) => res.data)
-      .then((data) => {
-        toaster.create({
-          type: data.message.type,
-          description: data.message.text,
-        });
-        navigate(`/view/${board.id}`);
-      })
-      .finally(() => {
-        setProgress(false);
-      });
-  };
   return (
     <Box>
-      <h3>{id}번 게시물 수정</h3>
-      <Stack gap={5}>
-        <Field label={"제목"}>
-          <Input
-            value={board.title}
-            onChange={(e) => setBoard({ ...board, title: e.target.value })}
-          />
-        </Field>
-        <Field label={"본문"}>
-          <Textarea
-            value={board.content}
-            onChange={(e) => setBoard({ ...board, content: e.target.value })}
-          />
-        </Field>
-        <Box>
-          <DialogRoot>
-            <DialogTrigger asChild>
-              <Button colorPalette={"red"} variant={"outline"}>
-                저장
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>저장 확인</DialogTitle>
-              </DialogHeader>
-              <DialogBody>
-                <p>{board.id}번 게시물을 수정 하시겠습니까?</p>
-              </DialogBody>
-              <DialogFooter>
-                <DialogActionTrigger>
-                  <Button variant={"outline"}>취소</Button>
-                </DialogActionTrigger>
-                <Button colorPalette={"blue"} onClick={handleSaveClick}>
-                  수정
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </DialogRoot>
-        </Box>
-      </Stack>
+      <h3>게시물 목록</h3>
+      <Table.Root interactive>
+        <Table.Header>
+          <Table.Row>
+            <Table.ColumnHeader>번호</Table.ColumnHeader>
+            <Table.ColumnHeader>제목</Table.ColumnHeader>
+            <Table.ColumnHeader>작성자</Table.ColumnHeader>
+            <Table.ColumnHeader>작성일시</Table.ColumnHeader>
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          {boardList.map((board) => (
+            <Table.Row onClick={() => handleRowClick(board.id)} key={board.id}>
+              <Table.Cell>{board.id}</Table.Cell>
+              <Table.Cell>{board.title}</Table.Cell>
+              <Table.Cell>{board.writer}</Table.Cell>
+              <Table.Cell>{board.inserted}</Table.Cell>
+            </Table.Row>
+          ))}
+        </Table.Body>
+      </Table.Root>
+      <PaginationRoot
+        onPageChange={handlePageChange}
+        count={1500}
+        pageSize={10}
+        page={page}
+      >
+        <HStack>
+          <PaginationPrevTrigger />
+          <PaginationItems />
+          <PaginationNextTrigger />
+        </HStack>
+      </PaginationRoot>
     </Box>
   );
 }

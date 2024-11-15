@@ -1,21 +1,50 @@
-import { Box, Table } from "@chakra-ui/react";
+import { Box, HStack, Table } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import {
+  PaginationItems,
+  PaginationNextTrigger,
+  PaginationPrevTrigger,
+  PaginationRoot,
+} from "../../components/ui/pagination.jsx";
 
 export function BoardList() {
   const [boardList, setBoardList] = useState([]);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
+    const controller = new AbortController();
     axios
-      .get("/api/board/list")
+      .get("/api/board/list", {
+        params: searchParams,
+        signal: controller.signal,
+      })
       .then((res) => res.data)
       .then((data) => setBoardList(data));
-  }, []);
+
+    return () => {
+      controller.abort();
+    };
+  }, [searchParams]);
+
+  // searchParams
+  console.log(searchParams.toString());
+
+  // page 번호
+  const pageParam = searchParams.get("page") ? searchParams.get("page") : "1";
+  const page = Number(pageParam);
 
   function handleRowClick(id) {
     navigate(`/view/${id}`);
+  }
+
+  function handlePageChange(e) {
+    console.log(e.page);
+    const nextSearchParams = new URLSearchParams(searchParams);
+    nextSearchParams.set("page", e.page);
+    setSearchParams(nextSearchParams);
   }
 
   return (
@@ -41,6 +70,18 @@ export function BoardList() {
           ))}
         </Table.Body>
       </Table.Root>
+      <PaginationRoot
+        onPageChange={handlePageChange}
+        count={1500}
+        pageSize={10}
+        page={page}
+      >
+        <HStack>
+          <PaginationPrevTrigger />
+          <PaginationItems />
+          <PaginationNextTrigger />
+        </HStack>
+      </PaginationRoot>
     </Box>
   );
 }
