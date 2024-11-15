@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -22,10 +23,21 @@ public class BoardService {
 
     }
 
-    public List<Board> list(Integer page) {
+    public Map<String, Object> list(Integer page, String searchType, String keyword) {
+        // SQL 의 LIMIT 키워드에서 사용되는 offset
+        Integer offset = (page - 1) * 10;
 
-        return mapper.selectPage((page - 1) * 10);
+        // 조회되는 게시물들
+        List<Board> list = mapper.selectPage(offset, searchType, keyword);
+
+        // 전체 게시물 수
+        Integer count = mapper.countAll(searchType, keyword);
+
+        return Map.of("list", list,
+                "count", count);
+
     }
+
 
     public Board get(int id) {
         return mapper.selectById(id);

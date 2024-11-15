@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -57,9 +56,15 @@ public class BoardController {
     }
 
     @GetMapping("list")
-    public List<Board> list(@RequestParam(value = "page", defaultValue = "1") Integer page) {
+    public Map<String, Object> list(
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @RequestParam(value = "st", defaultValue = "all") String searchType,
+            @RequestParam(value = "sk", defaultValue = "") String keyword) {
 
-        return service.list(page);
+        System.out.println(searchType);
+        System.out.println(keyword);
+
+        return service.list(page, searchType, keyword);
     }
 
     @PostMapping("add")

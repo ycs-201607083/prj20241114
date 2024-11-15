@@ -16,9 +16,14 @@ import { Button } from "../../components/ui/button.jsx";
 
 export function BoardList() {
   const [boardList, setBoardList] = useState([]);
-  const navigate = useNavigate();
+  const [count, setCount] = useState(0);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [search, setSearch] = useState({ type: "all", keyword: "" });
+  const [search, setSearch] = useState({
+    type: searchParams.get("sk") ?? "all",
+    keyword: searchParams.get("sk") ?? "",
+  });
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -28,7 +33,10 @@ export function BoardList() {
         signal: controller.signal,
       })
       .then((res) => res.data)
-      .then((data) => setBoardList(data));
+      .then((data) => {
+        setBoardList(data.list);
+        setCount(data.count);
+      });
 
     return () => {
       controller.abort();
@@ -38,7 +46,7 @@ export function BoardList() {
   // searchParams
   console.log(searchParams.toString());
 
-  //검색 조건
+  // 검색 조건
   console.log("검색조건", search);
 
   // page 번호
@@ -49,28 +57,29 @@ export function BoardList() {
     navigate(`/view/${id}`);
   }
 
+  function handlePageChange(e) {
+    console.log(e.page);
+    const nextSearchParams = new URLSearchParams(searchParams);
+    nextSearchParams.set("page", e.page);
+    setSearchParams(nextSearchParams);
+  }
+
   function handleSearchClick() {
     if (search.keyword.trim().length > 0) {
-      //검색
+      // 검색
       const nextSearchParam = new URLSearchParams(searchParams);
       nextSearchParam.set("st", search.type);
       nextSearchParam.set("sk", search.keyword);
 
       setSearchParams(nextSearchParam);
     } else {
+      // 검색 안함
       const nextSearchParam = new URLSearchParams(searchParams);
       nextSearchParam.delete("st");
       nextSearchParam.delete("sk");
 
       setSearchParams(nextSearchParam);
     }
-  }
-
-  function handlePageChange(e) {
-    console.log(e.page);
-    const nextSearchParams = new URLSearchParams(searchParams);
-    nextSearchParams.set("page", e.page);
-    setSearchParams(nextSearchParams);
   }
 
   return (
@@ -105,22 +114,22 @@ export function BoardList() {
             items={[
               { label: "전체", value: "all" },
               { label: "제목", value: "title" },
-              { label: "내용", value: "content" },
+              { label: "본문", value: "content" },
             ]}
           />
         </NativeSelectRoot>
-
         <Input
           value={search.keyword}
-          onChange={(e) => {
-            setSearch({ ...search, keyword: e.target.value.trim() });
-          }}
+          onChange={(e) =>
+            setSearch({ ...search, keyword: e.target.value.trim() })
+          }
         />
         <Button onClick={handleSearchClick}>검색</Button>
       </HStack>
+
       <PaginationRoot
         onPageChange={handlePageChange}
-        count={1500}
+        count={count}
         pageSize={10}
         page={page}
       >
