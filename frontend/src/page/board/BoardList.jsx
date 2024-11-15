@@ -70,6 +70,7 @@ export function BoardList() {
       const nextSearchParam = new URLSearchParams(searchParams);
       nextSearchParam.set("st", search.type);
       nextSearchParam.set("sk", search.keyword);
+      nextSearchParam.set("page", 1);
 
       setSearchParams(nextSearchParam);
     } else {
