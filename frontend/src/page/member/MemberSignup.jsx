@@ -1,36 +1,38 @@
-import { Box, Input, Stack, Textarea } from "@chakra-ui/react";
-import React, { useState } from "react";
+import { Box, Group, Input, Stack, Textarea } from "@chakra-ui/react";
 import { Field } from "../../components/ui/field.jsx";
 import { Button } from "../../components/ui/button.jsx";
+import { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 import { toaster } from "../../components/ui/toaster.jsx";
+import { useNavigate } from "react-router-dom";
 
 export function MemberSignup() {
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [description, setDescription] = useState("");
   const navigate = useNavigate();
+  const [idCheck, setIdCheck] = useState(false);
 
   function handleSaveClick() {
     axios
-      .post("/api/member/signup", {
-        id: id,
-        password,
-        description,
-      })
+      .post("/api/member/signup", { id, password, description })
       .then((res) => {
-        console.log("성공");
+        console.log("잘됨, 페이지 이동, 토스트 출력");
+
         const message = res.data.message;
         toaster.create({
           type: message.type,
           description: message.text,
         });
+
+        // TODO: login 으로 이동
         navigate("/");
       })
       .catch((e) => {
-        console.log("안됐을 때 해아하는 일");
+        console.log("안됐을 때 해야하는 일, 토스트 출력");
+
         const message = e.response.data.message;
+
         toaster.create({
           type: message.type,
           description: message.text,
@@ -41,12 +43,38 @@ export function MemberSignup() {
       });
   }
 
+  const handleIdCheckClick = () => {
+    axios
+      .get("/api/member/check", {
+        params: {
+          id: id,
+        },
+      })
+      .then((res) => res.data)
+      .then((data) => {
+        const message = data.message;
+        toaster.create({
+          type: message.type,
+          description: message.text,
+        });
+        setIdCheck(data.available);
+      });
+  };
+
+  //가입버튼 비활성화 여부
+  let disabled = true;
+  disabled = !idCheck;
   return (
     <Box>
-      <h3>회원가입</h3>
+      <h3>회원 가입</h3>
       <Stack gap={5}>
         <Field label={"아이디"}>
-          <Input value={id} onChange={(e) => setId(e.target.value)} />
+          <Group attached w={"100%"}>
+            <Input value={id} onChange={(e) => setId(e.target.value)} />
+            <Button onClick={handleIdCheckClick} variant={"outline"}>
+              중복확인
+            </Button>
+          </Group>
         </Field>
         <Field label={"암호"}>
           <Input
@@ -62,7 +90,9 @@ export function MemberSignup() {
         </Field>
 
         <Box>
-          <Button onClick={handleSaveClick}>회원가입</Button>
+          <Button disabled={disabled} onClick={handleSaveClick}>
+            가입
+          </Button>
         </Box>
       </Stack>
     </Box>
