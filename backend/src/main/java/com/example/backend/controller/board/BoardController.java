@@ -58,4 +58,9 @@ public class BoardController {
         }
     }
 
+    @PutMapping("update")
+    public void update(@RequestBody Board board) {
+        service.update(board);
+    }
+
 }
