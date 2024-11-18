@@ -24,6 +24,10 @@ public class MemberService {
         return mapper.selectById(id) != null;
     }
 
+    public boolean checkEmail(String email) {
+        return mapper.selectByEmail(email) != null;
+    }
+
     public List<Member> list() {
         return mapper.selectAll();
     }
@@ -57,4 +61,6 @@ public class MemberService {
         return cnt == 1;
 
     }
+
+
 }
