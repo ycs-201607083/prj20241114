@@ -8,3 +8,7 @@ CREATE TABLE member
 
 select *
 from member;
+
+delete
+from member
+WHERE id = '';

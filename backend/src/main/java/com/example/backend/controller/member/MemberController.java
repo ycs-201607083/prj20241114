@@ -72,4 +72,19 @@ public class MemberController {
     public Member getMember(@PathVariable String id) {
         return service.get(id);
     }
+
+    @DeleteMapping("remove")
+    public ResponseEntity<Map<String, Object>> remove(@RequestBody Member member) {
+        if (service.remove(member)) {
+            return ResponseEntity.ok((Map.of(
+                    "message", Map.of(
+                            "type", "success",
+                            "text", "회원정보를 삭제 했습니다."))));
+        } else {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", Map.of(
+                            "type", "warning",
+                            "text", "암호가 일치하지 않습니다.")));
+        }
+    }
 }
