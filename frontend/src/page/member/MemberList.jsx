@@ -1,9 +1,11 @@
 import { Box, Spinner, Table } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export function MemberList() {
   const [memberList, setMemberList] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // 회원목록 요청
@@ -12,6 +14,11 @@ export function MemberList() {
 
   if (!memberList || memberList.length === 0) {
     return <Spinner />;
+  }
+
+  //테이블 행 클릭시 회원정보보기
+  function handleRowClick(id) {
+    navigate(`/member/${id}`);
   }
 
   return (
@@ -27,7 +34,10 @@ export function MemberList() {
         </Table.Header>
         <Table.Body>
           {memberList.map((member) => (
-            <Table.Row key={member.id}>
+            <Table.Row
+              onClick={() => handleRowClick(member.id)}
+              key={member.id}
+            >
               <Table.Cell>{member.id}</Table.Cell>
               <Table.Cell>{member.inserted}</Table.Cell>
             </Table.Row>
