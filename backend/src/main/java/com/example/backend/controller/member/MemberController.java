@@ -1,6 +1,7 @@
 package com.example.backend.controller.member;
 
 import com.example.backend.dto.member.Member;
+import com.example.backend.dto.member.MemberEdit;
 import com.example.backend.service.member.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
@@ -85,6 +86,21 @@ public class MemberController {
                     "message", Map.of(
                             "type", "warning",
                             "text", "암호가 일치하지 않습니다.")));
+        }
+    }
+
+    @PutMapping("update")
+    public ResponseEntity<Map<String, Object>> update(@RequestBody MemberEdit member) {
+        if (service.update(member)) {
+            return ResponseEntity.ok((Map.of(
+                    "message", Map.of(
+                            "type", "success",
+                            "text", "회원정보를 수정 했습니다."))));
+        } else {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", Map.of(
+                            "type", "warning",
+                            "text", "기존 암호가 일치하지 않습니다.")));
         }
     }
 }
