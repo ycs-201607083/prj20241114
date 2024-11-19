@@ -10,6 +10,8 @@ import { MemberInfo } from "./page/member/MemberInfo.jsx";
 import { MemberEdit } from "./page/member/MemberEdit.jsx";
 import { MemberLogin } from "./page/member/MemberLogin.jsx";
 import axios from "axios";
+import { createContext } from "react";
+import { jwtDecode } from "jwt-decode";
 
 //axios 인터셉터 설정
 axios.interceptors.request.use(function (config) {
@@ -62,8 +64,19 @@ const router = createBrowserRouter([
   },
 ]);
 
+//step 1: context 만들기
+export const AuthenticationContext = createContext(null);
+
 function App() {
-  return <RouterProvider router={router} />;
+  const token = localStorage.getItem("token");
+  const decode = jwtDecode(token);
+  const id = decode.sub;
+
+  return (
+    <AuthenticationContext.Provider value={{ id: id }}>
+      <RouterProvider router={router} />
+    </AuthenticationContext.Provider>
+  );
 }
 
 export default App;
