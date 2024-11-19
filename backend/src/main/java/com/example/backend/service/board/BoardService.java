@@ -19,10 +19,9 @@ public class BoardService {
 
     public boolean add(Board board, Authentication authentication) {
         board.setWriter(authentication.getName());
-        
+
         int cnt = mapper.insert(board);
         return cnt == 1;
-
     }
 
     public Map<String, Object> list(Integer page, String searchType, String keyword) {
