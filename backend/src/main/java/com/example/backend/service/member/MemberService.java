@@ -67,7 +67,7 @@ public class MemberService {
         Member db = mapper.selectById(member.getId());
         if (db != null) {
             if (db.getPassword().equals(member.getPassword())) {
-
+                
             }
         }
         return null;
