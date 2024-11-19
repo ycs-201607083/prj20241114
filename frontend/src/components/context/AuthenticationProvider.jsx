@@ -1,33 +1,43 @@
 import React, { createContext, useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 
-//step 1: context 만들기
+// step 1 : context 만들기
 export const AuthenticationContext = createContext(null);
 
 function AuthenticationProvider({ children }) {
-  const [id, setId] = useState("");
+  const [userToken, setUserToken] = useState({});
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       const decoded = jwtDecode(token);
-      setId(decoded.sub);
+      setUserToken(decoded);
     }
   }, []);
 
   function login(token) {
+    localStorage.setItem("token", token);
     const decoded = jwtDecode(token);
-    setId(decoded.sub);
-    localStorage.setItem("token", data.token);
+    setUserToken(decoded);
   }
 
   function logout() {
     localStorage.removeItem("token");
-    setId("");
+    setUserToken({});
+  }
+
+  const isAuthenticated = Date.now() < userToken.exp * 1000;
+  let isAdmin = false;
+
+  console.log(userToken);
+  if (userToken.scope) {
+    isAdmin = userToken.scope.split(" ").includes("admin");
   }
 
   return (
-    <AuthenticationContext.Provider value={{ id: id, login, logout }}>
+    <AuthenticationContext.Provider
+      value={{ id: userToken.sub, login, logout, isAuthenticated, isAdmin }}
+    >
       {children}
     </AuthenticationContext.Provider>
   );
