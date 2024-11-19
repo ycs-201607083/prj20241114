@@ -6,6 +6,8 @@ import com.example.backend.service.member.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -86,37 +88,54 @@ public class MemberController {
     }
 
     @GetMapping("{id}")
-    public Member getMember(@PathVariable String id) {
-        return service.get(id);
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Member> getMember(@PathVariable String id, Authentication auth) {
+
+        if (service.hasAccess(id, auth)) {
+            return ResponseEntity.ok(service.get(id));
+        } else {
+            return ResponseEntity.status(403).build();
+        }
+
     }
 
     @DeleteMapping("remove")
-    public ResponseEntity<Map<String, Object>> remove(@RequestBody Member member) {
-        if (service.remove(member)) {
-            return ResponseEntity.ok((Map.of(
-                    "message", Map.of(
-                            "type", "success",
-                            "text", "회원정보를 삭제 했습니다."))));
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, Object>> remove(@RequestBody Member member, Authentication auth) {
+        if (service.hasAccess(member.getId(), auth)) {
+            if (service.remove(member)) {
+                return ResponseEntity.ok((Map.of(
+                        "message", Map.of(
+                                "type", "success",
+                                "text", "회원정보를 삭제 했습니다."))));
+            } else {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "message", Map.of(
+                                "type", "warning",
+                                "text", "암호가 일치하지 않습니다.")));
+            }
         } else {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "message", Map.of(
-                            "type", "warning",
-                            "text", "암호가 일치하지 않습니다.")));
+            return ResponseEntity.status(403).build();
         }
     }
 
     @PutMapping("update")
-    public ResponseEntity<Map<String, Object>> update(@RequestBody MemberEdit member) {
-        if (service.update(member)) {
-            return ResponseEntity.ok((Map.of(
-                    "message", Map.of(
-                            "type", "success",
-                            "text", "회원정보를 수정 했습니다."))));
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, Object>> update(@RequestBody MemberEdit member, Authentication auth) {
+        if (service.hasAccess(member.getId(), auth)) {
+            if (service.update(member)) {
+                return ResponseEntity.ok((Map.of(
+                        "message", Map.of(
+                                "type", "success",
+                                "text", "회원정보를 수정 했습니다."))));
+            } else {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "message", Map.of(
+                                "type", "warning",
+                                "text", "기존 암호가 일치하지 않습니다.")));
+            }
         } else {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "message", Map.of(
-                            "type", "warning",
-                            "text", "기존 암호가 일치하지 않습니다.")));
+            return ResponseEntity.status(403).build();
         }
     }
 
