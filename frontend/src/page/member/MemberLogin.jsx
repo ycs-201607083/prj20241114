@@ -3,10 +3,13 @@ import { Field } from "../../components/ui/field.jsx";
 import { Button } from "../../components/ui/button.jsx";
 import { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { toaster } from "../../components/ui/toaster.jsx";
 
 export function MemberLogin() {
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
   function handleLoginClick() {
     axios
@@ -14,8 +17,25 @@ export function MemberLogin() {
         id,
         password,
       })
-      .then()
-      .catch()
+      .then((res) => res.data)
+      .then((data) => {
+        //토스트 띄우고 "/" 로 이동, localStorage 에 토큰 저장
+        toaster.create({
+          type: data.message.type,
+          description: data.message.text,
+        });
+        navigate("/");
+        //localStorage에 token 저장
+        localStorage.setItem("token", data.token);
+      })
+      .catch((e) => {
+        const message = e.response.data.message;
+        // 토스트 띄우고
+        toaster.create({
+          type: message.type,
+          description: message.text,
+        });
+      })
       .finally();
   }
 
