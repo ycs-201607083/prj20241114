@@ -119,4 +119,16 @@ public class MemberController {
                             "text", "기존 암호가 일치하지 않습니다.")));
         }
     }
+
+    @PostMapping("login")
+    public void login(@RequestBody Member member) {
+//        System.out.println("member = " + member);
+        String token = service.token(member);
+
+        if (token != null) {
+
+        } else {
+
+        }
+    }
 }
