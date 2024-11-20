@@ -12,7 +12,7 @@ export function CommentInput({ boardId }) {
         comment,
         boardId: boardId,
       })
-      .then()
+      .then(location.reload())
       .catch()
       .finally();
   }
@@ -23,6 +23,7 @@ export function CommentInput({ boardId }) {
         <Textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
+          variant={"outline"}
         />
         <Button onClick={handleSaveClick}>댓글 작성</Button>
       </Group>
