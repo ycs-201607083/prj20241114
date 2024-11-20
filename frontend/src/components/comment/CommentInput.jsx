@@ -12,7 +12,14 @@ export function CommentInput({ boardId, onSaveClick }) {
           onChange={(e) => setComment(e.target.value)}
           variant={"outline"}
         />
-        <Button onClick={() => onSaveClick(comment)}>댓글 작성</Button>
+        <Button
+          onClick={() => {
+            onSaveClick(comment);
+            setComment("");
+          }}
+        >
+          댓글 작성
+        </Button>
       </Group>
     </Box>
   );

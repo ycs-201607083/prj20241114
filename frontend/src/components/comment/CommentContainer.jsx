@@ -3,6 +3,7 @@ import { CommentInput } from "./CommentInput.jsx";
 import { CommentList } from "./CommentList.jsx";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { toaster } from "../ui/toaster.jsx";
 
 export function CommentContainer({ boardId }) {
   const [commentList, setCommentList] = useState([]);
@@ -24,6 +25,13 @@ export function CommentContainer({ boardId }) {
         boardId: boardId,
         comment: comment,
       })
+      .then((res) => res.data.message)
+      .then((message) => {
+        toaster.create({
+          type: message.type,
+          description: message.text,
+        });
+      })
       .finally(() => {
         setProcessing(false);
       });
@@ -32,6 +40,14 @@ export function CommentContainer({ boardId }) {
   function handleDeleteClick(id) {
     setProcessing(true);
     axios.delete(`/api/comment/remove/${id}`).finally(() => {
+      setProcessing(false);
+    });
+  }
+
+  function handleEditClick(id, comment) {
+    setProcessing(true);
+
+    axios.put(`/api/comment/edit`, { id, comment }).finally(() => {
       setProcessing(false);
     });
   }
@@ -45,6 +61,7 @@ export function CommentContainer({ boardId }) {
           boardId={boardId}
           commentList={commentList}
           onDeleteClick={handleDeleteClick}
+          onEditClick={handleEditClick}
         />
       </Stack>
     </Box>
