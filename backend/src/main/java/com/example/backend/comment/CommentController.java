@@ -25,4 +25,12 @@ public class CommentController {
     public void add(@RequestBody Comment comment, Authentication auth) {
         service.add(comment, auth);
     }
+
+    @DeleteMapping("remove/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public void remove(@PathVariable Integer id, Authentication auth) {
+        if (service.hasAccess(id, auth)) {
+            service.remove(id);
+        }
+    }
 }

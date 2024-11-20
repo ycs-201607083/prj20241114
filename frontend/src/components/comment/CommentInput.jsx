@@ -4,7 +4,6 @@ import { useState } from "react";
 
 export function CommentInput({ boardId, onSaveClick }) {
   const [comment, setComment] = useState("");
-
   return (
     <Box>
       <Group>
