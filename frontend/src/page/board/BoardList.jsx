@@ -1,4 +1,4 @@
-import { Box, HStack, Input, Table } from "@chakra-ui/react";
+import { Badge, Box, HStack, Input, Table } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -9,6 +9,7 @@ import {
   PaginationRoot,
 } from "../../components/ui/pagination.jsx";
 import { Button } from "../../components/ui/button.jsx";
+import { FaCommentDots } from "react-icons/fa6";
 
 export function BoardList() {
   const [boardList, setBoardList] = useState([]);
@@ -18,7 +19,6 @@ export function BoardList() {
     type: "all",
     keyword: "",
   });
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,16 +41,19 @@ export function BoardList() {
 
   useEffect(() => {
     const nextSearch = { ...search };
+
     if (searchParams.get("st")) {
       nextSearch.type = searchParams.get("st");
     } else {
       nextSearch.type = "all";
     }
+
     if (searchParams.get("sk")) {
       nextSearch.keyword = searchParams.get("sk");
     } else {
       nextSearch.keyword = "";
     }
+
     setSearch(nextSearch);
   }, [searchParams]);
 
@@ -108,7 +111,15 @@ export function BoardList() {
                 key={board.id}
               >
                 <Table.Cell>{board.id}</Table.Cell>
-                <Table.Cell>{board.title}</Table.Cell>
+                <Table.Cell>
+                  {board.title}
+                  {board.countComment > 0 && (
+                    <Badge variant={"subtle"} colorPalette={"green"}>
+                      <FaCommentDots />
+                      {board.countComment}
+                    </Badge>
+                  )}
+                </Table.Cell>
                 <Table.Cell>{board.writer}</Table.Cell>
                 <Table.Cell>{board.inserted}</Table.Cell>
               </Table.Row>
@@ -116,7 +127,7 @@ export function BoardList() {
           </Table.Body>
         </Table.Root>
       ) : (
-        <p>검색 결과가 없습니다.</p>
+        <p>조회된 결과가 없습니다.</p>
       )}
 
       <HStack>
@@ -127,7 +138,7 @@ export function BoardList() {
           >
             <option value={"all"}>전체</option>
             <option value={"title"}>제목</option>
-            <option value={"content"}>내용</option>
+            <option value={"content"}>본문</option>
           </select>
         </Box>
         <Input
