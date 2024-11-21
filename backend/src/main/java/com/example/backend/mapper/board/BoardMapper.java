@@ -46,22 +46,6 @@ public interface BoardMapper {
 
     @Select("""
             <script>
-            SELECT COUNT(*) FROM board
-            WHERE 
-                <trim prefixOverrides="OR">
-                    <if test="searchType == 'all' or searchType == 'title'">
-                        title LIKE CONCAT('%', #{keyword}, '%')
-                    </if>
-                    <if test="searchType == 'all' or searchType == 'content'">
-                     OR content LIKE CONCAT('%', #{keyword}, '%')
-                    </if>
-                </trim>
-            </script>
-            """)
-    Integer countAll(String searchType, String keyword);
-
-    @Select("""
-            <script>
                 SELECT b.id, b.title, b.writer, b.inserted, COUNT(c.id) countComment
                 FROM board b LEFT JOIN comment c
                              ON b.id = c.board_id
@@ -80,4 +64,33 @@ public interface BoardMapper {
             </script>
             """)
     List<Board> selectPage(Integer offset, String searchType, String keyword);
+
+    @Select("""
+            <script>
+            SELECT COUNT(*) FROM board
+            WHERE 
+                <trim prefixOverrides="OR">
+                    <if test="searchType == 'all' or searchType == 'title'">
+                        title LIKE CONCAT('%', #{keyword}, '%')
+                    </if>
+                    <if test="searchType == 'all' or searchType == 'content'">
+                     OR content LIKE CONCAT('%', #{keyword}, '%')
+                    </if>
+                </trim>
+            </script>
+            """)
+    Integer countAll(String searchType, String keyword);
+
+    @Insert("""
+            INSERT INTO board_file
+            VALUES (#{id}, #{fileName})
+            """)
+    int insertFile(int id, String fileName);
+
+    @Select("""
+                    SELECT name
+                    FROM board_file
+                    WHERE board_id=#{id}
+            """)
+    List<String> selectFilesByBoardId(int id);
 }
