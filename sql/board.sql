@@ -3,7 +3,7 @@ CREATE TABLE board
     id       INT PRIMARY KEY AUTO_INCREMENT,
     title    varchar(300)  not null,
     content  varchar(5000) not null,
-    writer   varchar(100)  not null,
+    writer   varchar(20)   NOT NULL REFERENCES member (id),
     inserted DATETIME default NOW()
 );
 
@@ -18,3 +18,5 @@ FROM board;
 
 SELECT COUNT(*)
 FROM board;
+
+DESC board;
