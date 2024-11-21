@@ -9,8 +9,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +26,11 @@ public class BoardService {
     @Value("${image.src-prefix}")
     String imageSrcPrefix;
 
+    final S3Client s3;
+
+    @Value("${bucket.Name}")
+    String bucketName;
+
     final BoardMapper mapper;
 
     public boolean add(Board board, MultipartFile[] files, Authentication authentication) {
@@ -30,18 +38,19 @@ public class BoardService {
         int cnt = mapper.insert(board);
 
         if (files != null && files.length > 0) {
-            //폴더 만들기
-            String directory = "C:/Temp/prj1114/" + board.getId();
-            File dir = new File(directory);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
             //파일 업로드
             //TODO:local -> aws
             for (MultipartFile file : files) {
-                String filePath = "C:/Temp/prj1114/" + board.getId() + "/" + file.getOriginalFilename();
+                String objectKey = STR."prj1114/\{board.getId()}/\{file.getOriginalFilename()}";
+
+                PutObjectRequest por = PutObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(objectKey)
+                        .acl(ObjectCannedACL.PUBLIC_READ)
+                        .build();
+
                 try {
-                    file.transferTo(new File(filePath));
+                    s3.putObject(por, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
