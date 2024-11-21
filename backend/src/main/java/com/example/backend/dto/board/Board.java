@@ -14,4 +14,6 @@ public class Board {
     private LocalDateTime inserted;
     private List<BoardFile> fileList;
     private Integer countComment;
+
+    private Integer countFile;
 }
