@@ -3,6 +3,7 @@ package com.example.backend.service.board;
 import com.example.backend.dto.board.Board;
 import com.example.backend.dto.board.BoardFile;
 import com.example.backend.mapper.board.BoardMapper;
+import com.example.backend.mapper.comment.CommentMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
@@ -23,31 +25,35 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class BoardService {
 
-    @Value("${image.src-prefix}")
-    String imageSrcPrefix;
-
+    final BoardMapper mapper;
+    final CommentMapper commentMapper;
     final S3Client s3;
+
+    @Value("${image.src.prefix}")
+    String imageSrcPrefix;
 
     @Value("${bucket.Name}")
     String bucketName;
 
-    final BoardMapper mapper;
-
     public boolean add(Board board, MultipartFile[] files, Authentication authentication) {
+
+
         board.setWriter(authentication.getName());
+
         int cnt = mapper.insert(board);
 
         if (files != null && files.length > 0) {
-            //파일 업로드
-            //TODO:local -> aws
-            for (MultipartFile file : files) {
-                String objectKey = STR."prj1114/\{board.getId()}/\{file.getOriginalFilename()}";
 
+            // 파일 업로드
+            for (MultipartFile file : files) {
+
+                String objectKey = STR."prj1114/\{board.getId()}/\{file.getOriginalFilename()}";
                 PutObjectRequest por = PutObjectRequest.builder()
                         .bucket(bucketName)
                         .key(objectKey)
                         .acl(ObjectCannedACL.PUBLIC_READ)
                         .build();
+
 
                 try {
                     s3.putObject(por, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
@@ -55,13 +61,15 @@ public class BoardService {
                     throw new RuntimeException(e);
                 }
 
-                //board_file 테이블에 파일명 입력
+                // board_file 테이블에 파일명 입력
                 mapper.insertFile(board.getId(), file.getOriginalFilename());
             }
+
+
         }
 
-
         return cnt == 1;
+
     }
 
     public Map<String, Object> list(Integer page, String searchType, String keyword) {
@@ -79,12 +87,13 @@ public class BoardService {
 
     }
 
-
     public Board get(int id) {
         Board board = mapper.selectById(id);
         List<String> fileNameList = mapper.selectFilesByBoardId(id);
         List<BoardFile> fileSrcList = fileNameList.stream()
-                .map(name -> new BoardFile(name, STR."\{imageSrcPrefix}/\{id}/\{name}")).toList();
+                .map(name -> new BoardFile(name, STR."\{imageSrcPrefix}/\{id}/\{name}"))
+                .toList();
+
         board.setFileList(fileSrcList);
         return board;
     }
@@ -97,6 +106,27 @@ public class BoardService {
     }
 
     public boolean remove(int id) {
+        // 첨부파일 지우기
+        // 실제파일(s3) 지우기
+        List<String> fileName = mapper.selectFilesByBoardId(id);
+
+        for (String file : fileName) {
+            String key = STR."prj1114/\{id}/\{file}";
+            DeleteObjectRequest dor = DeleteObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .build();
+
+            s3.deleteObject(dor);
+
+        }
+
+        // db 지우기
+        mapper.deleteFileByBoardId(id);
+
+        // 댓글 지우기
+        commentMapper.deleteByBoardId(id);
+
         int cnt = mapper.deleteById(id);
         return cnt == 1;
     }

@@ -2,7 +2,10 @@ package com.example.backend.service.member;
 
 import com.example.backend.dto.member.Member;
 import com.example.backend.dto.member.MemberEdit;
+import com.example.backend.mapper.board.BoardMapper;
+import com.example.backend.mapper.comment.CommentMapper;
 import com.example.backend.mapper.member.MemberMapper;
+import com.example.backend.service.board.BoardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -19,8 +22,12 @@ import java.util.stream.Collectors;
 @Transactional
 @RequiredArgsConstructor
 public class MemberService {
+
     final MemberMapper mapper;
     final JwtEncoder jwtEncoder;
+    private final CommentMapper commentMapper;
+    private final BoardMapper boardMapper;
+    private final BoardService boardService;
 
     public boolean add(Member member) {
         int cnt = mapper.insert(member);
@@ -29,10 +36,6 @@ public class MemberService {
 
     public boolean checkId(String id) {
         return mapper.selectById(id) != null;
-    }
-
-    public boolean checkEmail(String email) {
-        return mapper.selectByEmail(email) != null;
     }
 
     public List<Member> list() {
@@ -45,15 +48,29 @@ public class MemberService {
 
     public boolean remove(Member member) {
         int cnt = 0;
-        //기존 암호와 비교
+
+        // 기존 암호와 비교
         Member db = mapper.selectById(member.getId());
 
         if (db != null) {
             if (db.getPassword().equals(member.getPassword())) {
+
+                // 댓글 지우기
+                commentMapper.deleteByMemberId(member.getId());
+
+                // 쓴 게시물 목록 얻기
+                List<Integer> boards = boardMapper.selectByWriter(member.getId());
+                // 각 게시물 지우기
+                for (Integer boardId : boards) {
+                    boardService.remove(boardId);
+                }
+
+
                 cnt = mapper.deleteById(member.getId());
             }
         }
         return cnt == 1;
+
     }
 
     public boolean update(MemberEdit member) {
@@ -69,16 +86,22 @@ public class MemberService {
 
     }
 
+    public boolean checkEmail(String email) {
+        Member member = mapper.selectByEmail(email);
+
+        return member != null;
+    }
 
     public String token(Member member) {
         Member db = mapper.selectById(member.getId());
         List<String> auths = mapper.selectAuthByMemberId(member.getId());
-        String authsString = auths.stream().collect(Collectors.joining(" "));
+        String authsString = auths.stream()
+                .collect(Collectors.joining(" "));
 
         if (db != null) {
             if (db.getPassword().equals(member.getPassword())) {
-                //token 만들어서 리턴
-                JwtClaimsSet claimsSet = JwtClaimsSet.builder()
+                // token 만들어서 리턴
+                JwtClaimsSet claims = JwtClaimsSet.builder()
                         .issuer("self")
                         .subject(member.getId())
                         .issuedAt(Instant.now())
@@ -86,14 +109,15 @@ public class MemberService {
                         .claim("scope", authsString)
                         .build();
 
-                return jwtEncoder.encode(JwtEncoderParameters.from(claimsSet)).getTokenValue();
+                return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
             }
         }
+
         return null;
     }
 
-    public boolean hasAccess(String id, Authentication authentication) {
-        return id.equals(authentication.getName());
+    public boolean hasAccess(String id, Authentication auth) {
+        return id.equals(auth.getName());
     }
 
     public boolean isAdmin(Authentication auth) {

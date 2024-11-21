@@ -12,22 +12,31 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/comment")
+@RequiredArgsConstructor
 public class CommentController {
+
     final CommentService service;
 
-    @GetMapping("list/{boardId}")
-    public List<Comment> list(@PathVariable Integer boardId) {
-        return service.list(boardId);
-    }
-
-    @PostMapping("add")
+    @PutMapping("edit")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Map<String, Object>> add(@RequestBody Comment comment, Authentication auth) {
-        service.add(comment, auth);
+    public ResponseEntity<Map<String, Object>> edit(
+            @RequestBody Comment comment,
+            Authentication authentication) {
+        if (service.hasAccess(comment.getId(), authentication)) {
+            if (service.update(comment)) {
+                return ResponseEntity.ok().body(Map.of("message",
+                        Map.of("type", "success",
+                                "text", "댓글이 수정되었습니다.")));
+            } else {
 
-        return ResponseEntity.ok().body(Map.of("message", Map.of("type", "success", "text", "댓글이 입력 되었습니다.")));
+                return ResponseEntity.internalServerError().body(Map.of("message",
+                        Map.of("type", "error",
+                                "text", "댓글이 수정되지 않았습니다.")));
+            }
+        } else {
+            return ResponseEntity.status(403).build();
+        }
     }
 
     @DeleteMapping("remove/{id}")
@@ -38,17 +47,17 @@ public class CommentController {
         }
     }
 
-    @PutMapping("edit")
+    @GetMapping("list/{boardId}")
+    public List<Comment> list(@PathVariable Integer boardId) {
+        return service.list(boardId);
+    }
+
+    @PostMapping("add")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Map<String, Object>> edit(@RequestBody Comment comment, Authentication auth) {
-        if (service.hasAccess(comment.getId(), auth)) {
-            if (service.Update(comment)) {
-                return ResponseEntity.ok().body(Map.of("message", Map.of("type", "success", "text", "댓글이 수정 되었습니다.")));
-            } else {
-                return ResponseEntity.ok().body(Map.of("message", Map.of("type", "warning", "text", "댓글이 수정되지 되었습니다.")));
-            }
-        } else {
-            return ResponseEntity.status(403).build();
-        }
+    public ResponseEntity<Map<String, Object>> add(@RequestBody Comment comment, Authentication auth) {
+        service.add(comment, auth);
+        return ResponseEntity.ok().body(Map.of("message",
+                Map.of("type", "success",
+                        "text", "새 댓글이 등록되었습니다.")));
     }
 }

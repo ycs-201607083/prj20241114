@@ -13,10 +13,12 @@ import java.util.List;
 @Transactional
 @RequiredArgsConstructor
 public class CommentService {
+
     final CommentMapper mapper;
 
     public void add(Comment comment, Authentication auth) {
         comment.setMemberId(auth.getName());
+
         mapper.insert(comment);
     }
 
@@ -25,17 +27,17 @@ public class CommentService {
     }
 
     public boolean hasAccess(Integer id, Authentication auth) {
-        Comment comment = mapper.selectbyId(id);
+        Comment comment = mapper.selectById(id);
         return comment.getMemberId().equals(auth.getName());
-
     }
 
     public void remove(Integer id) {
         mapper.deleteById(id);
     }
 
-    public boolean Update(Comment comment) {
+    public boolean update(Comment comment) {
         int cnt = mapper.update(comment);
+
         return cnt == 1;
     }
 }

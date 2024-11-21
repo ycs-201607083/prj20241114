@@ -45,25 +45,27 @@ public interface BoardMapper {
     int update(Board board);
 
     @Select("""
-                    <script>
-                        SELECT b.id, b.title, b.writer, b.inserted, COUNT(DISTINCT c.id) countComment, COUNT(DISTINCT f.name) countFile
-                        FROM board b LEFT JOIN comment c
-                                     ON b.id = c.board_id
-                                    LEFT JOIN board_file f
-                                    ON b.id = f.board_id
-                        WHERE 
-                            <trim prefixOverrides="OR">
-                                <if test="searchType == 'all' or searchType == 'title'">
-                                    title LIKE CONCAT('%', #{keyword}, '%')
-                                </if>
-                                <if test="searchType == 'all' or searchType == 'content'">
-                                 OR content LIKE CONCAT('%', #{keyword}, '%')
-                                </if>
-                            </trim>
-                        GROUP BY b.id
-                        ORDER BY id DESC
-                        LIMIT #{offset}, 10
-                    </script>
+            <script>
+                SELECT b.id, b.title, b.writer, b.inserted,
+                        COUNT(DISTINCT c.id) countComment, COUNT(DISTINCT f.name) countFile
+            
+                FROM board b LEFT JOIN comment c
+                                ON b.id = c.board_id
+                             LEFT JOIN board_file f 
+                                ON b.id = f.board_id
+                WHERE 
+                    <trim prefixOverrides="OR">
+                        <if test="searchType == 'all' or searchType == 'title'">
+                            title LIKE CONCAT('%', #{keyword}, '%')
+                        </if>
+                        <if test="searchType == 'all' or searchType == 'content'">
+                         OR content LIKE CONCAT('%', #{keyword}, '%')
+                        </if>
+                    </trim>
+                GROUP BY b.id
+                ORDER BY id DESC
+                LIMIT #{offset}, 10
+            </script>
             """)
     List<Board> selectPage(Integer offset, String searchType, String keyword);
 
@@ -87,12 +89,25 @@ public interface BoardMapper {
             INSERT INTO board_file
             VALUES (#{id}, #{fileName})
             """)
-    int insertFile(int id, String fileName);
+    int insertFile(Integer id, String fileName);
 
     @Select("""
-                    SELECT name
-                    FROM board_file
-                    WHERE board_id=#{id}
+            SELECT name 
+            FROM board_file
+            WHERE board_id = #{id}
             """)
     List<String> selectFilesByBoardId(int id);
+
+    @Delete("""
+            DELETE FROM board_file
+            WHERE board_id = #{id}
+            """)
+    int deleteFileByBoardId(int id);
+
+    @Select("""
+            SELECT id
+            FROM board
+            WHERE writer = #{id}
+            """)
+    List<Integer> selectByWriter(String id);
 }
