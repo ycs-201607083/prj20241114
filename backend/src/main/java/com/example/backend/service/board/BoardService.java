@@ -32,7 +32,7 @@ public class BoardService {
     @Value("${image.src.prefix}")
     String imageSrcPrefix;
 
-    @Value("${bucket.Name}")
+    @Value("${bucket.name}")
     String bucketName;
 
     public boolean add(Board board, MultipartFile[] files, Authentication authentication) {
@@ -127,29 +127,51 @@ public class BoardService {
         // 댓글 지우기
         commentMapper.deleteByBoardId(id);
 
+        //좋아요 지우기
+        mapper.deleteKileByBoardId(id);
+
         int cnt = mapper.deleteById(id);
         return cnt == 1;
     }
 
-    public boolean update(Board board, List<String> removeFiles) {
-
+    public boolean update(Board board, List<String> removeFiles, MultipartFile[] uploadFiles) {
         if (removeFiles != null) {
-            //파일 지우기
             for (String file : removeFiles) {
-
                 String key = STR."prj1114/\{board.getId()}/\{file}";
                 DeleteObjectRequest dor = DeleteObjectRequest.builder()
                         .bucket(bucketName)
                         .key(key)
                         .build();
 
-                //db 파일 지우기
+                // s3 파일 지우기
                 s3.deleteObject(dor);
 
                 // db 파일 지우기
                 mapper.deleteFileByBoardIdAndName(board.getId(), file);
             }
         }
+
+        if (uploadFiles != null && uploadFiles.length > 0) {
+            for (MultipartFile file : uploadFiles) {
+                String objectKey = STR."prj1114/\{board.getId()}/\{file.getOriginalFilename()}";
+                PutObjectRequest por = PutObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(objectKey)
+                        .acl(ObjectCannedACL.PUBLIC_READ)
+                        .build();
+
+
+                try {
+                    s3.putObject(por, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                // board_file 테이블에 파일명 입력
+                mapper.insertFile(board.getId(), file.getOriginalFilename());
+            }
+        }
+
 
         int cnt = mapper.update(board);
         return cnt == 1;
@@ -159,5 +181,35 @@ public class BoardService {
         Board board = mapper.selectById(id);
 
         return board.getWriter().equals(authentication.getName());
+    }
+
+    public Map<String, Object> like(Board board, Authentication authentication) {
+        // 이미 좋아요면 삭제
+        int cnt = mapper.deleteLikeByBoardIdAndMemberId(board.getId(), authentication.getName());
+        // 아니면 삽입
+        if (cnt == 0) {
+            mapper.insertLike(board.getId(), authentication.getName());
+        }
+
+        int countLike = mapper.countLike(board.getId());
+
+        Map<String, Object> result = Map.of("like", (cnt == 0), "count", countLike);
+
+        return result;
+    }
+
+    public Map<String, Object> getLike(int id, Authentication authentication) {
+        boolean like = false;
+        if (authentication == null) {
+            Map<String, Object> row = mapper.selectLikeByBoardIdAndMemberId(id, authentication.getName());
+            if (row != null) {
+                like = true;
+            }
+        } else {
+
+        }
+        int countLike = mapper.countLike(id);
+        Map<String, Object> result = Map.of("like", like, "count", countLike);
+        return result;
     }
 }

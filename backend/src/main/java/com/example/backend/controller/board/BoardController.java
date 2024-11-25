@@ -20,17 +20,25 @@ public class BoardController {
 
     final BoardService service;
 
+    @PostMapping("like")
+    @PreAuthorize("isAuthenticated()")
+    public Map<String, Object> like(@RequestBody Board board,
+                                    Authentication authentication) {
+        return service.like(board, authentication);
+    }
+
     @PutMapping("update")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> update(
             Board board,
             @RequestParam(value = "removeFiles[]", required = false) List<String> removeFiles,
+            @RequestParam(value = "uploadFiles[]", required = false) MultipartFile[] uploadFiles,
             Authentication authentication) {
         if (service.hasAccess(board.getId(), authentication)) {
 
 
             if (service.validate(board)) {
-                if (service.update(board, removeFiles)) {
+                if (service.update(board, removeFiles, uploadFiles)) {
                     return ResponseEntity.ok()
                             .body(Map.of("message", Map.of("type", "success",
                                     "text", STR."\{board.getId()}번 게시물이 수정되었습니다.")));
@@ -51,7 +59,6 @@ public class BoardController {
                             , "text", "수정 권한이 없습니다.")));
         }
     }
-
 
     @DeleteMapping("delete/{id}")
     @PreAuthorize("isAuthenticated()")
@@ -75,7 +82,6 @@ public class BoardController {
                             , "text", "삭제 권한이 없습니다.")));
         }
     }
-
 
     @GetMapping("view/{id}")
     public Board view(@PathVariable int id) {
@@ -120,4 +126,8 @@ public class BoardController {
 
     }
 
+    @GetMapping("like/{id}")
+    public Map<String, Object> getLike(@PathVariable int id, Authentication authentication) {
+        return service.getLike(id, authentication);
+    }
 }

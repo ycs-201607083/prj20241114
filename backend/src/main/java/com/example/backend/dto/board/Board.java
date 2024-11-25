@@ -12,8 +12,10 @@ public class Board {
     private String content;
     private String writer;
     private LocalDateTime inserted;
-    private List<BoardFile> fileList;
-    private Integer countComment;
 
+    private Integer countComment;
     private Integer countFile;
+    private Integer countLike;
+
+    private List<BoardFile> fileList;
 }

@@ -4,6 +4,7 @@ import com.example.backend.dto.board.Board;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface BoardMapper {
@@ -47,12 +48,16 @@ public interface BoardMapper {
     @Select("""
             <script>
                 SELECT b.id, b.title, b.writer, b.inserted,
-                        COUNT(DISTINCT c.id) countComment, COUNT(DISTINCT f.name) countFile
+                        COUNT(DISTINCT c.id) countComment,
+                        COUNT(DISTINCT f.name) countFile,
+                        COUNT(DISTINCT l.member_id) countLike
             
                 FROM board b LEFT JOIN comment c
                                 ON b.id = c.board_id
                              LEFT JOIN board_file f 
                                 ON b.id = f.board_id
+                             LEFT JOIN board_like l
+                                ON b.id = l.board_id    
                 WHERE 
                     <trim prefixOverrides="OR">
                         <if test="searchType == 'all' or searchType == 'title'">
@@ -111,10 +116,51 @@ public interface BoardMapper {
             """)
     List<Integer> selectByWriter(String id);
 
+
     @Delete("""
             DELETE FROM board_file
             WHERE board_id = #{id}
               AND name = #{name}
             """)
     int deleteFileByBoardIdAndName(Integer id, String name);
+
+    @Delete("""
+            DELETE FROM board_like
+            WHERE board_id = #{id}
+              AND member_id = #{name}
+            """)
+    int deleteLikeByBoardIdAndMemberId(Integer id, String name);
+
+    @Insert("""
+            INSERT INTO board_like
+            VALUES (#{id}, #{name})
+            """)
+    int insertLike(Integer id, String name);
+
+    @Select("""
+            SELECT COUNT(*)
+            FROM board_like
+            WHERE board_id = #{id}
+            """)
+    int countLike(Integer id);
+
+    @Select("""
+            SELECT * 
+            FROM board_like
+            WHERE board_id = #{id}
+              AND member_id = #{name}
+            """)
+    Map<String, Object> selectLikeByBoardIdAndMemberId(int id, String name);
+
+    @Delete("""
+                DELETE FROM board_like
+                WHERE board_id = #{id}
+            """)
+    int deleteKileByBoardId(int id);
+
+    @Delete("""
+                    DELETE FROM board_like
+                    WHERE member_id = #{id}
+            """)
+    void deleteLikeByMemberId(String id);
 }

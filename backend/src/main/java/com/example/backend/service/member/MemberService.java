@@ -64,7 +64,8 @@ public class MemberService {
                 for (Integer boardId : boards) {
                     boardService.remove(boardId);
                 }
-
+                //좋아요 지우기
+                boardMapper.deleteLikeByMemberId(member.getId());
 
                 cnt = mapper.deleteById(member.getId());
             }
